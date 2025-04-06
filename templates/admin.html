@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+        }
+        .admin-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .admin-container h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .user-list {
+            margin-top: 20px;
+        }
+        .user-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .user-card h3 {
+            margin: 0;
+            color: #007bff;
+        }
+        .user-card p {
+            margin: 5px 0;
+            color: #555;
+        }
+        .session-list {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+        .session-list li {
+            margin: 5px 0;
+            color: #777;
+        }
+        .logout-link {
+            color: #007bff;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 20px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h2>Admin Panel</h2>
+        <div class="user-list">
+            {% for user in users %}
+            <div class="user-card">
+                <h3>{{ user.username }}</h3>
+                <p>Age: {{ user.age }}</p>
+                <p>Height: {{ user.height }} cm</p>
+                <p>Weight: {{ user.weight }} kg</p>
+                <p>Blood Group: {{ user.blood_group }}</p>
+                <p>Total Sessions: {{ user.sessions|length }}</p>
+                <div class="session-list">
+                    <h4>Sessions:</h4>
+                    <ul>
+                        {% for session in user.sessions %}
+                        <li>
+                            Date: {{ session.date }} - Count: {{ session.count }},
+                            Total Time: {{ session.total_time }}s,
+                            Avg Speed: {{ session.average_speed|round(2) }}s/rep
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="logout-link" onclick="window.location.href='/logout'">Logout</div>
+    </div>
+</body>
+</html>

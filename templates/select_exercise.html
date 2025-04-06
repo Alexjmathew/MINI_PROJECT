@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Exercise</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .exercise-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        .exercise-container h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .exercise-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .exercise-container button:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .link-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .link-container a {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .link-container a:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="exercise-container">
+        <h2>Select Exercise</h2>
+        <form method="POST" action="/select_exercise" onsubmit="return validateExercise(event)">
+            <button type="submit" name="exercise" value="knee_raises">Knee Raises</button>
+            <button type="submit" name="exercise" value="squats">Squats</button>
+        </form>
+        <p id="error-message" class="error-message" style="display: none;">Exercise not available</p>
+    </div>
+
+    <div class="link-container">
+        <a href="/login">Login</a>
+        <a href="/profile">Profile</a>
+    </div>
+
+    <script>
+        function validateExercise(event) {
+            const unavailableExercises = ["squats"];  // Add any unavailable exercises here
+            const selectedExercise = event.submitter.value;
+
+            if (unavailableExercises.includes(selectedExercise)) {
+                document.getElementById("error-message").style.display = "block";
+                event.preventDefault(); // Prevent form submission
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

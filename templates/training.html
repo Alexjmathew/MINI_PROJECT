@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posture Training</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .video-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 800px;
+        }
+        .video-container img {
+            width: 48%;
+            height: 300px;
+            object-fit: cover;
+            border: 5px solid #ddd;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .count {
+            font-size: 2em;
+            margin-top: 20px;
+            color: #555;
+            animation: blink 1s infinite alternate;
+        }
+        .feedback {
+            font-size: 1.5em;
+            margin: 20px auto;
+            padding: 10px;
+            background: #ffeb3b;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: slideIn 1s ease-in-out;
+        }
+        .controls {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .controls input, .controls button {
+            font-size: 1em;
+            padding: 10px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            width: 150px;
+        }
+        .controls button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .controls button:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            margin: 20px auto;
+            max-width: 600px;
+            text-align: left;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 2s ease-in-out;
+        }
+        .btn-container {
+            margin-top: 20px;
+        }
+        .btn-container a {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+        .btn-container a:hover {
+            background: #218838;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes blink {
+            from { color: red; }
+            to { color: #555; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Posture Training with Computer Vision</h1>
+    <div class="container">
+        <div class="video-container">
+            <img src="/video_feed" id="videoFeed" alt="Video Feed">
+            <img src="/static/3_highkneeswarmup_1x1_v2 (1).png" alt="Reference Image">
+        </div>
+        <div class="count">
+            Repetition Count: <span id="count">0</span>/<span id="target">0</span>
+        </div>
+        <div class="feedback" id="feedback">Feedback: Begin Exercise!</div>
+        <div class="controls">
+            <input type="number" id="targetCount" placeholder="Enter target count">
+            <button onclick="setTarget()">Start Exercise</button>
+            <button onclick="saveSession()">Save Session</button>
+        </div>
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <p>
+                Stand up straight with your legs slightly apart.<br>
+                Slowly raise your right knee to 90 degrees (or as high as you can), then slowly lower it back down to the floor.<br>
+                Slowly raise your left knee to 90 degrees (or as high as you can), then slowly lower it back down to the floor.<br>
+                Repeat the movement 10 times with each leg.
+            </p>
+            <p>
+                Tip: If you struggle with balance, hold onto the back of a chair or a worktop. Consider asking a friend or relative
+                to be nearby in case you need extra help.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function fetchCount() {
+            fetch('/get_count')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('count').innerText = data.count;
+                    document.getElementById('target').innerText = data.target;
+                    document.getElementById('feedback').innerText = `Feedback: ${data.feedback}`;
+                });
+        }
+
+        function setTarget() {
+            const target = document.getElementById('targetCount').value;
+            fetch('/set_target', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target })
+            }).then(response => response.json())
+              .then(data => {
+                  console.log('Target set:', data.target);
+              });
+        }
+
+        function saveSession() {
+            fetch('/save_session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(response => response.json())
+              .then(data => {
+                  console.log('Session saved:', data);
+                  alert('Session saved successfully!');
+              });
+        }
+
+        setInterval(fetchCount, 1000);
+    </script>
+    <div class="btn-container">
+        <a href="/logout">Logout</a>
+        <a href="/select_exercise">Start</a>
+    </div>
+</body>
+</html>
