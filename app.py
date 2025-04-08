@@ -30,6 +30,7 @@ start_time = None
 last_rep_time = None
 exercise = None
 
+
 # Calculate angle between three points
 def calculate_angle(a, b, c):
     a = np.array(a)
@@ -43,6 +44,7 @@ def calculate_angle(a, b, c):
     angle = np.arccos(np.clip(cosine_angle, -1.0, 1.0))
 
     return np.degrees(angle)
+
 
 # Generate video frames
 def generate_frames():
@@ -102,7 +104,8 @@ def generate_frames():
 
             # Draw feedback on the frame
             cv2.putText(image, f'Angle: {int(angle)}', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-            cv2.putText(image, f'Count: {count}/{target_count}', (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+            cv2.putText(image, f'Count: {count}/{target_count}', (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255),
+                        2)
             cv2.putText(image, feedback_message, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
             mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
@@ -115,14 +118,14 @@ def generate_frames():
                 cv2.putText(image, feedback_message, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
                 # Save session data
-                if 'username' in session:
+                if 'email' in session:
                     session_data = {
                         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "count": count,
                         "total_time": total_time,
                         "average_speed": total_time / count if count > 0 else 0
                     }
-                    user_ref = db.collection('users').document(session['username'])
+                    user_ref = db.collection('users').document(session['email'])
                     user_ref.update({"sessions": firestore.ArrayUnion([session_data])})
 
                 # Reset global variables for the next session
@@ -138,49 +141,63 @@ def generate_frames():
 
     cap.release()
 
+
 # Routes
 @app.route('/')
 def index():
-    if 'username' in session:
+    if 'email' in session:
         return redirect(url_for('profile'))
     return redirect(url_for('login'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        user_ref = db.collection('users').document(username)
-        user = user_ref.get()
 
-        if user.exists and user.to_dict()['password'] == password:
-            session['username'] = username
+        # Query users by email
+        users_ref = db.collection('users').where('email', '==', email).limit(1)
+        users = list(users_ref.stream())
+
+        if users and users[0].to_dict()['password'] == password:
+            session['email'] = email
+            session['username'] = users[0].to_dict()['username']
             return redirect(url_for('profile'))
         else:
-            return render_template('login.html', error="Invalid username or password.")
+            return render_template('login.html', error="Invalid email or password.")
     return render_template('login.html')
+
 
 @app.route('/logout')
 def logout():
+    session.pop('email', None)
     session.pop('username', None)
     return redirect(url_for('login'))
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         age = request.form['age']
         height = request.form['height']
         weight = request.form['weight']
         blood_group = request.form['blood_group']
 
-        user_ref = db.collection('users').document(username)
-        if user_ref.get().exists:
-            return render_template('register.html', error="Username already exists.")
+        # Check if email already exists
+        email_query = db.collection('users').where('email', '==', email).limit(1)
+        if list(email_query.stream()):
+            return render_template('register.html', error="Email already registered.")
+
+        # Create document with email as the document ID
+        user_ref = db.collection('users').document(email)
 
         user_data = {
             "username": username,
+            "email": email,
             "password": password,
             "age": age,
             "height": height,
@@ -189,16 +206,18 @@ def register():
             "sessions": []
         }
         user_ref.set(user_data)
+        session['email'] = email
         session['username'] = username
         return redirect(url_for('profile'))
     return render_template('register.html')
 
+
 @app.route('/profile')
 def profile():
-    if 'username' not in session:
+    if 'email' not in session:
         return redirect(url_for('login'))
 
-    user_ref = db.collection('users').document(session['username'])
+    user_ref = db.collection('users').document(session['email'])
     user = user_ref.get()
 
     if not user.exists:
@@ -220,18 +239,20 @@ def profile():
                            session_total_times=session_total_times,
                            session_average_speeds=session_average_speeds)
 
+
 @app.route('/admin')
 def admin():
-    if 'username' not in session or session['username'] != 'ALEX J MATHEW':
+    if 'email' not in session or session['username'] != 'ALEX J MATHEW':
         return redirect(url_for('login'))
     users = list(db.collection('users').stream())
     users = [user.to_dict() for user in users]
     return render_template('admin.html', users=users)
 
+
 @app.route('/save_session', methods=['POST'])
 def save_session():
     global count, start_time, last_rep_time
-    if 'username' not in session:
+    if 'email' not in session:
         return jsonify({'success': False, 'error': 'User not logged in'})
 
     if count == 0:
@@ -245,10 +266,11 @@ def save_session():
         "average_speed": total_time / count if count > 0 else 0
     }
 
-    user_ref = db.collection('users').document(session['username'])
+    user_ref = db.collection('users').document(session['email'])
     user_ref.update({"sessions": firestore.ArrayUnion([session_data])})
 
     return jsonify({'success': True})
+
 
 @app.template_filter('mean')
 def mean_filter(values):
@@ -256,15 +278,17 @@ def mean_filter(values):
         return 0
     return sum(values) / len(values)
 
+
 # Register the filter
 app.jinja_env.filters['mean'] = mean_filter
 
+
 @app.route('/recommendations')
 def recommendations():
-    if 'username' not in session:
+    if 'email' not in session:
         return redirect(url_for('login'))
 
-    user_ref = db.collection('users').document(session['username'])
+    user_ref = db.collection('users').document(session['email'])
     user = user_ref.get()
 
     if not user.exists or 'sessions' not in user.to_dict() or len(user.to_dict()['sessions']) == 0:
@@ -283,11 +307,13 @@ def recommendations():
     if not recommendations:
         recommendations.append("Great job! Keep up the good work and aim for consistency.")
 
-    return render_template('recommendation.html', recommendations=recommendations, user=user.to_dict(), avg_speed=avg_speed)
+    return render_template('recommendation.html', recommendations=recommendations, user=user.to_dict(),
+                           avg_speed=avg_speed)
+
 
 @app.route('/select_exercise', methods=['GET', 'POST'])
 def select_exercise():
-    if 'username' not in session:
+    if 'email' not in session:
         return redirect(url_for('login'))
     global exercise
     if request.method == 'POST':
@@ -309,20 +335,24 @@ def select_exercise():
         return redirect(url_for('training'))
     return render_template('select_exercise.html')
 
+
 @app.route('/training')
 def training():
-    if 'username' not in session:
+    if 'email' not in session:
         return redirect(url_for('login'))
     return render_template('training.html')
+
 
 @app.route('/video_feed')
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
 @app.route('/get_count')
 def get_count():
     global count, target_count, feedback_message
     return jsonify({'count': count, 'target': target_count, 'feedback': feedback_message})
+
 
 @app.route('/set_target', methods=['POST'])
 def set_target():
@@ -335,6 +365,7 @@ def set_target():
     start_time = None
     last_rep_time = None
     return jsonify({'success': True, 'target': target_count})
+
 
 if __name__ == "__main__":
     app.run(debug=True)
