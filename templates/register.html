@@ -3,93 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
+    <title>Admin Panel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #e3f2fd;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            animation: fadeIn 1s ease-in;
+            background-color: #f4f4f9;
+            padding: 20px;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .register-container {
+        .admin-container {
             background: #fff;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
-            width: 320px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .admin-container h2 {
+            color: #333;
             text-align: center;
-            transform: translateY(-20px);
-            animation: slideDown 0.8s ease-out forwards;
+            margin-bottom: 20px;
         }
-        @keyframes slideDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .user-list {
+            margin-top: 20px;
         }
-        .register-container h2 {
-            margin-bottom: 15px;
-            color: #007bff;
-        }
-        .register-container input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .register-container button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-        }
-        .register-container button:hover {
-            background-color: #218838;
-            transform: scale(1.05);
-        }
-        .error {
-            color: red;
+        .user-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
             margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .login-link {
+        .user-card h3 {
+            margin: 0;
+            color: #007bff;
+        }
+        .user-card p {
+            margin: 5px 0;
+            color: #555;
+        }
+        .session-list {
             margin-top: 10px;
+            padding-left: 20px;
+        }
+        .session-list li {
+            margin: 5px 0;
+            color: #777;
+        }
+        .logout-link {
             color: #007bff;
             cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        .login-link:hover {
-            color: #0056b3;
+            text-align: center;
+            margin-top: 20px;
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <h2>Register</h2>
-        {% if error %}
-        <div class="error">{{ error }}</div>
-        {% endif %}
-        <form method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="number" name="age" placeholder="Age" required>
-            <input type="number" name="height" placeholder="Height (cm)" required>
-            <input type="number" name="weight" placeholder="Weight (kg)" required>
-            <input type="text" name="blood_group" placeholder="Blood Group" required>
-            <button type="submit">Register</button>
-        </form>
-        <div class="login-link" onclick="window.location.href='/login'">Already have an account? Login</div>
+    <div class="admin-container">
+        <h2>Admin Panel</h2>
+        <div class="user-list">
+            {% for user in users %}
+            <div class="user-card">
+                <h3>{{ user.username }}</h3>
+                <p>Email: {{ user.email }}</p>
+                <p>Age: {{ user.age }}</p>
+                <p>Height: {{ user.height }} cm</p>
+                <p>Weight: {{ user.weight }} kg</p>
+                <p>Blood Group: {{ user.blood_group }}</p>
+                <p>Total Sessions: {{ user.sessions|length }}</p>
+                <div class="session-list">
+                    <h4>Sessions:</h4>
+                    <ul>
+                        {% for session in user.sessions %}
+                        <li>
+                            Date: {{ session.date }} - Count: {{ session.count }},
+                            Total Time: {{ session.total_time }}s,
+                            Avg Speed: {{ session.average_speed|round(2) }}s/rep
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="logout-link" onclick="window.location.href='/logout'">Logout</div>
     </div>
 </body>
 </html>
